@@ -1,10 +1,13 @@
 import express from 'express';
 import { authRouter } from './routes';
-// import dotenv from 'dotenv';
+import dotenv from 'dotenv';
+import { dbConnection } from './database/config';
 
-// dotenv.config();
+dotenv.config();
 
 const app = express();
+dbConnection();
+
 const port = process.env.PORT || '8080';
 
 app.use(express.static('public'));
@@ -12,9 +15,6 @@ app.use(express.static('public'));
 app.use(express.json());
 
 app.use('/api/auth', authRouter)
-
-// app.get('/', rootHandler);
-// app.get('/hello/:name', helloHandler);
 
 app.listen(port, (err?: unknown) => {
   if (err) return console.error(err);
