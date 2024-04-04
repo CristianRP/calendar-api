@@ -1,15 +1,34 @@
 import {  Request, Response } from 'express';
+import User from '../models/User';
 
-const createUser = (req: Request, res: Response) => {
-  const { name, email, password } = req.body;
+const createUser = async(req: Request, res: Response) => {
+  const { email, password } = req.body;
 
-  res.status(201).json({
-    ok: true,
-    msg: 'register-controller',
-    name,
-    email,
-    password,
-  })
+  try {
+    let user = await User.findOne({ email });
+
+    if (user) {
+      return res.status(400).json({
+        ok: false,
+        msg: 'User already exists.'
+      });
+    }
+    
+    user = new User(req.body);
+    await user.save();
+
+    res.status(201).json({
+      ok: true,
+      uid: user.id,
+      name: user.name,
+    })
+  } catch(error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: 'Failed, please reach the admin.'
+    })
+  } 
 }
 
 const loginUser = (req: Request, res: Response) => {
