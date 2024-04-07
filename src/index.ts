@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-import { authRouter } from './routes';
+import { authRouter, eventRouter } from './routes';
 import { dbConnection } from './database/config';
 
 dotenv.config();
@@ -18,7 +18,8 @@ app.use(express.static('public'));
 
 app.use(express.json());
 
-app.use('/api/auth', authRouter)
+app.use('/api/auth', authRouter);
+app.use('/api/events', eventRouter);
 
 app.listen(port, (err?: unknown) => {
   if (err) return console.error(err);
