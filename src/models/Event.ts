@@ -21,4 +21,13 @@ const EventSchema = new Schema({
   }
 });
 
+// We don't need this, but I leave it as a reference
+// that we can update mongoose method and customize them
+
+// EventSchema.method('toJSON', function() {
+//   const { __v, _id, ...object } = this.toObject();
+//   object.id = _id;
+//   return object;
+// })
+
 export default model('Event', EventSchema);

@@ -1,61 +1,123 @@
 import { Response } from 'express';
 import Event from '../models/Event';
-import User from '../models/User';
 import { CustomRequest } from '../middlewares/validate-jwt';
 
 export const getEvents = async(req: CustomRequest, res: Response) => {
-  const events = await Event.find({ user: req.uid });
-  
-  res.json({
-    ok: true,
-    msg: 'getEvents',
-    events,
-  })
+  try {
+    const events = await Event.find({ user: req.uid }).populate('user', 'name');
+    
+    res.json({
+      ok: true,
+      msg: 'getEvents',
+      events,
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: 'A server error ocurred.'
+    })
+  }
 }
 
 export const postEvent = async(req: CustomRequest, res: Response) => {
-  const user = await User.findOne({ _id: req.uid });
-
   const { title, notes, start, end } = req.body;
 
-  const event = await Event.create({
-    title,
-    notes,
-    start: new Date(start),
-    end: new Date(end),
-    user,
-  })
+  try {
+    const event = await Event.create({
+      title,
+      notes,
+      start: new Date(start),
+      end: new Date(end),
+      user: req.uid,
+    })
 
-  res.json({
-    ok: true,
-    msg: 'createEvent',
-    event,
-  })
+    res.status(200).json({
+      ok: true,
+      msg: 'createEvent',
+      event,
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: 'A server error ocurred.'
+    })
+  }
 }
 
 export const updateEvent = async(req: CustomRequest, res: Response) => {
   const { id } = req.params;
 
-  console.log('Event->', id);
-  
-  const title = "Updated title";
+  try {
+    const event = await Event.findById(id);
 
-  const event = await Event.findOneAndUpdate({ _id: id }, { title }, { new: true });
+    if (!event) {
+      res.status(404).json({
+        ok: false,
+        msg: 'Event not found',
+      })
+    }
 
-  res.json({
-    ok: true,
-    msg: 'putEvent',
-    event,
-  })
+    if (event?.user.toString() !== req.uid) {
+      res.status(401).json({
+        ok: false,
+        msg: 'Unauthorized action',
+      })
+    }
+
+    const newEvent = {
+      ...req.body,
+      user: req.uid,
+    }
+
+    const updatedEvent = await Event.findByIdAndUpdate(id, newEvent, { new: true });
+
+    res.status(200).json({
+      ok: true,
+      msg: 'createEvent',
+      updatedEvent,
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: 'A server error ocurred.'
+    })
+  }
 }
 
 export const deleteEvent = async(req: CustomRequest, res: Response) => {
   const { id } = req.params;
 
-  await Event.findOneAndDelete({ _id: id });
+  try {
+    const event = await Event.findById(id);
 
-  res.json({
-    ok: true,
-    msg: 'deleteEvent',
-  })
+    if (!event) {
+      res.status(404).json({
+        ok: false,
+        msg: 'Event not found',
+      })
+    }
+
+    if (event?.user.toString() !== req.uid) {
+      res.status(401).json({
+        ok: false,
+        msg: 'Unauthorized action',
+      })
+    }
+
+    await Event.findByIdAndDelete(id);
+  
+    res.json({
+      ok: true,
+      msg: 'Event deleted',
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      ok: false,
+      msg: 'A server error ocurred.'
+    })
+  }
 }
